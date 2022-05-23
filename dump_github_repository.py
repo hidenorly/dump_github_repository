@@ -27,9 +27,12 @@ def getBaseUrl(url):
 def getLinks(articleUrl, result):
   if result == None:
     result = {}
+
+  _result = []
   res = requests.get(articleUrl)
   baseUrl = getBaseUrl(articleUrl)
   soup = BeautifulSoup(res.text, 'html.parser') #use html instead of res.text
+
   links = soup.find_all("a", {})
   for aLink in links:
     theUrl = aLink.get("href").strip()
@@ -39,7 +42,24 @@ def getLinks(articleUrl, result):
     else:
       theItemProp = aLink.get("itemprop")
       if theItemProp == "name codeRepository":
-        result[theText] = baseUrl+theUrl
+        _result.append( { "name": theText, "url":baseUrl+theUrl, "lang":""} )
+
+  langs = soup.find_all("span", {})
+  result_lang = []
+  for aLang in langs:
+    theItemProp = aLang.get("itemprop")
+    if theItemProp == "programmingLanguage":
+      result_lang.append( aLang.get_text().strip() )
+
+  i = 0
+  nLangMax = len(result_lang)
+  for aData in _result:
+    tmp = aData
+    if i < nLangMax:
+      tmp["lang"] = result_lang[i]
+    result[ aData["name"] ] = tmp
+    i = i + 1
+
   return result
 
 
@@ -59,8 +79,8 @@ if __name__=="__main__":
   for anAccount in accounts:
     links = getLinks(baseUrl+anAccount+"?tab=repositories", links)
 
-  for theText, theUrl in links.items():
+  for theText, theData in links.items():
     if args.mode == "dump":
-      print('  "'+theText+'":"'+theUrl+'",')
+      print('  "'+theText+'":{"url":"'+theData["url"]+'", "lang":"'+theData["lang"]+'"}",')
     elif args.mode == "clone":
-      print("git clone "+theUrl)
+      print("git clone "+theData["url"])
