@@ -69,6 +69,7 @@ if __name__=="__main__":
   parser.add_argument('args', nargs='*', help='list up github account e.g. hidenoly')
   parser.add_argument('-m', '--mode', action='store', default='dump', help='specify mode dump or clone')
   parser.add_argument('-l', '--filterLang', action='store', default='.*', help='specify language (regexp) if you want to filter')
+  parser.add_argument('-r', '--filterRepo', action='store', default='.*', help='specify repository (regexp) if you want to filter')
 
   args = parser.parse_args()
 
@@ -82,7 +83,7 @@ if __name__=="__main__":
     links = getLinks(baseUrl+anAccount+"?tab=repositories", links)
 
   for theText, theData in links.items():
-    if re.match(args.filterLang, theData["lang"]):
+    if re.match(args.filterLang, theData["lang"]) and re.match(args.filterRepo, theText):
       if args.mode == "dump":
         print('  "'+theText+'":{"url":"'+theData["url"]+'", "lang":"'+theData["lang"]+'"}",')
       elif args.mode == "clone":
