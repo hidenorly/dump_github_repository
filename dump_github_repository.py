@@ -1,4 +1,4 @@
-#   Copyright 2022 hidenorly
+#   Copyright 2022, 2023 hidenorly
 #
 #   Licensed under the Apache License, Version 2.0 (the "License");
 #   you may not use this file except in compliance with the License.
@@ -25,6 +25,18 @@ def getBaseUrl(url):
     baseUrl =  url[0:baseUrlIndex+1]
   return baseUrl
 
+def joinUrl(baseUrl, theUrl):
+  found = True
+  while(found):
+    found = False
+    if baseUrl.endswith("/"):
+      baseUrl = baseUrl[0:len(baseUrl)-1]
+      found = True
+    if theUrl.startswith("/"):
+      theUrl = theUrl[1:len(theUrl)]
+      found = True
+  return baseUrl+"/"+theUrl
+
 def getLinks(articleUrl, result):
   if result == None:
     result = {}
@@ -39,11 +51,13 @@ def getLinks(articleUrl, result):
     theUrl = aLink.get("href").strip()
     theText = aLink.get_text().strip()
     if theText=="Next" and theUrl.find("tab=repositories")!=-1:
-      result = getLinks( theUrl, result )
+      nextLink = joinUrl(baseUrl,theUrl)
+      result = getLinks( nextLink, result )
     else:
       theItemProp = aLink.get("itemprop")
       if theItemProp == "name codeRepository":
-        _result.append( { "name": theText, "url":baseUrl+theUrl, "lang":""} )
+        theLink = joinUrl(baseUrl,theUrl)
+        _result.append( { "name": theText, "url":theLink, "lang":""} )
 
   langs = soup.find_all("span", {})
   result_lang = []
@@ -79,7 +93,7 @@ if __name__=="__main__":
   accounts = sys.argv
   del accounts[0]
 
-  for anAccount in accounts:
+  for anAccount in args.args:
     links = getLinks(baseUrl+anAccount+"?tab=repositories", links)
 
   for theText, theData in links.items():
